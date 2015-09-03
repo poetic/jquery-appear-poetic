@@ -19,28 +19,36 @@
   };
   var $window = $(window);
 
-  var $prior_appeared = [];
+  var privor_visibles = [];
 
   function process() {
     check_lock = false;
-    for (var index = 0, selectorsLength = selectors.length; index < selectorsLength; index++) {
-      var $appeared = $(selectors[index]).filter(function() {
-        return $(this).is(':appeared');
-      });
+    selectors.forEach(function (selector) {
+      $(selector).each(function () {
+        var element  = this
 
-      $appeared.trigger('appear', [$appeared]);
+        var was_visible = $.inArray(element, privor_visibles) !== -1
+        var is_visible  = $(element).is(':appeared')
 
-      if ($prior_appeared[index]) {
-        var $disappeared = $prior_appeared[index].not($appeared);
-        $disappeared.trigger('disappear', [$disappeared]);
-      }
-      $prior_appeared[index] = $appeared;
-    }
+        if (was_visible !== is_visible) {
+          // trigger events
+          $(element).trigger(is_visible ? 'appear' : 'disappear', [$(element)])
+
+          // add / remove elements from previous_visibles
+          if (is_visible) {
+            privor_visibles.push(element)
+          } else {
+            privor_visibles = privor_visibles.filter(function (prior_visible) {
+              return prior_visible !== element
+            })
+          }
+        }
+      })
+    })
   };
 
   function add_selector(selector) {
     selectors.push(selector);
-    $prior_appeared.push();
   }
 
   // "appeared" custom filter
@@ -56,14 +64,10 @@
     var left = offset.left;
     var top = offset.top;
 
-    if (top + $element.height() >= window_top &&
-        top - ($element.data('appear-top-offset') || 0) <= window_top + $window.height() &&
-        left + $element.width() >= window_left &&
-        left - ($element.data('appear-left-offset') || 0) <= window_left + $window.width()) {
-      return true;
-    } else {
-      return false;
-    }
+    return top + $element.height() >= window_top &&
+      top - ($element.data('appear-top-offset') || 0) <= window_top + $window.height() &&
+      left + $element.width() >= window_left &&
+      left - ($element.data('appear-left-offset') || 0) <= window_left + $window.width()
   };
 
   $.fn.extend({
@@ -98,9 +102,8 @@
     force_appear: function() {
       if (check_binded) {
         process();
-        return true;
       }
-      return false;
+      return check_binded;
     }
   });
 })(function() {
