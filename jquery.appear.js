@@ -81,7 +81,10 @@
     // watching for element's appearance in browser viewport
     appear: function(selector, options) {
       var opts = $.extend({}, defaults, options || {});
-      selectors.push(selector);
+
+      if (!$.inArray(selectors, selector)) {
+        selectors.push(selector);
+      }
 
       once(function () {
         $(window).scroll(throttled_process).resize(throttled_process);
