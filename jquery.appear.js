@@ -30,7 +30,7 @@
           // trigger events
           $(element).trigger(is_visible ? 'appear' : 'disappear', [$(element)])
 
-          // add / remove elements from previous_visibles
+          // add / remove elements from privor_visibles
           if (is_visible) {
             privor_visibles.push(element)
           } else {
@@ -109,6 +109,12 @@
     },
   });
 
+  $.extend({
+    appear_privor_visibles: function () {
+      return privor_visibles
+    }
+  })
+
   var once = function (fn) {
     var called = false;
     return function () {
@@ -120,6 +126,15 @@
       fn();
     }
   }
+
+  // garbage collection every 30mins
+  setInterval(function () {
+    privor_visibles.forEach(function (element, index) {
+      if (!$.contains(document.body, element)) {
+        privor_visibles.splice(index, 1)
+      }
+    })
+  }, 1000 * 60 * 30)
 
 })(function() {
   if (typeof module !== 'undefined') {
