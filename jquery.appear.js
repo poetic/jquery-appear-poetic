@@ -6,22 +6,19 @@
  *
  * https://github.com/morr/jquery.appear/
  *
- * Version: 0.3.6
+ * Version: 0.3.7
  */
 (function($) {
+  var $window = $(window);
   var selectors = [];
-
-  var check_lock = false;
+  var privor_visibles = [];
   var defaults = {
     interval: 250,
     force_process: false
   };
-  var $window = $(window);
+  var throttle_interval = 250
 
-  var privor_visibles = [];
-
-  function process() {
-    check_lock = false;
+  function process () {
     selectors.forEach(function (selector) {
       $(selector).each(function () {
         var element  = this
@@ -44,10 +41,21 @@
         }
       })
     })
-  };
+  }
 
-  function add_selector(selector) {
-    selectors.push(selector);
+  var throttled_process = throttle(process, throttle_interval)
+
+  function throttle (callback, limit) {
+    var wait = false;                 // Initially, we're not waiting
+    return function () {              // We return a throttled function
+      if (!wait) {                  // If we're not waiting
+        callback.call();          // Execute users function
+        wait = true;              // Prevent future invocations
+        setTimeout(function () {  // After a period of time
+          wait = false;         // And allow future invocations
+        }, limit);
+      }
+    }
   }
 
   // "appeared" custom filter
@@ -73,24 +81,15 @@
     // watching for element's appearance in browser viewport
     appear: function(options) {
       var opts = $.extend({}, defaults, options || {});
-      var selector = this.selector || this;
-      add_selector(selector);
+      var selector = this.selector;
+      selectors.push(selector);
 
       once(function () {
-        var on_check = function() {
-          if (check_lock) {
-            return;
-          }
-          check_lock = true;
-
-          setTimeout(process, opts.interval);
-        };
-
-        $(window).scroll(on_check).resize(on_check);
+        $(window).scroll(throttled_process).resize(throttled_process);
       })()
 
       if (opts.force_process) {
-        setTimeout(process, opts.interval);
+        throttled_process();
       }
 
       return $(selector);
@@ -105,7 +104,10 @@
         process();
       }
       return hasSelectors;
-    }
+    },
+    set_appear_throttle_interval: function (interval) {
+      throttle_interval = interval
+    },
   });
 
   var once = function (fn) {
