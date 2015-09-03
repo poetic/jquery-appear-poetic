@@ -77,11 +77,10 @@
       left - ($element.data('appear-left-offset') || 0) <= window_left + $window.width()
   };
 
-  $.fn.extend({
+  $.extend({
     // watching for element's appearance in browser viewport
-    appear: function(options) {
+    appear: function(selector, options) {
       var opts = $.extend({}, defaults, options || {});
-      var selector = this.selector;
       selectors.push(selector);
 
       once(function () {
