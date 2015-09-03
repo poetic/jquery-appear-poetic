@@ -82,7 +82,7 @@
     appear: function(selector, options) {
       var opts = $.extend({}, defaults, options || {});
 
-      if (!$.inArray(selectors, selector)) {
+      if ($.inArray(selectors, selector) === -1) {
         selectors.push(selector);
       }
 
