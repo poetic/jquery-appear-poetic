@@ -11,7 +11,6 @@
 (function($) {
   var selectors = [];
 
-  var check_binded = false;
   var check_lock = false;
   var defaults = {
     interval: 250,
@@ -75,7 +74,9 @@
     appear: function(options) {
       var opts = $.extend({}, defaults, options || {});
       var selector = this.selector || this;
-      if (!check_binded) {
+      add_selector(selector);
+
+      once(function () {
         var on_check = function() {
           if (check_lock) {
             return;
@@ -86,13 +87,12 @@
         };
 
         $(window).scroll(on_check).resize(on_check);
-        check_binded = true;
-      }
+      })()
 
       if (opts.force_process) {
         setTimeout(process, opts.interval);
       }
-      add_selector(selector);
+
       return $(selector);
     }
   });
@@ -100,12 +100,26 @@
   $.extend({
     // force elements's appearance check
     force_appear: function() {
-      if (check_binded) {
+      var hasSelectors = !!selectors.length
+      if (hasSelectors) {
         process();
       }
-      return check_binded;
+      return hasSelectors;
     }
   });
+
+  var once = function (fn) {
+    var called = false;
+    return function () {
+      if (called) {
+        return
+      }
+
+      called = true;
+      fn();
+    }
+  }
+
 })(function() {
   if (typeof module !== 'undefined') {
     // Node
